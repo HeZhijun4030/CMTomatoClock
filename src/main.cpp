@@ -29,8 +29,8 @@ public:
     Manager& SetTaskName(const std::string& taskname) {taskName_ = taskname;logger_->info("Task name set to: {}", taskname);return *this;}
     Manager& SetTime(const int& time){time_.store(time);logger_->info("Task time set to: {}",time_.load());return *this;}
 
-    std::string GetTaskName(){logger_->info("Got taskname");return taskName_;}
-    int GetTime(){logger_->info("Got time");return time_.load();}
+    std::string GetTaskName(){return taskName_;}
+    int GetTime(){return time_.load();}
 
     void StartTask() {
     cms::ClearScreen();
@@ -64,10 +64,10 @@ public:
 	    while (!(stopFlag_.load()) && time_.load()>0) {
 	    std::cout<<'\n' << std ::flush;
 	    cms=cms::SafeInput<std::string>("");
-	    if (cms=="q"){stopFlag_ .store(true);break;}
+	    if (cms=="q"){logger_->info("quit");stopFlag_ .store(true);break;}
 	    
-	    if (cms=="p"){cms::ClearScreen();pauseFlag_.store(true);}
-	    if (cms=="r"){cms::ClearScreen();pauseFlag_.store(false);}
+	    if (cms=="p"){logger_->info("pause");cms::ClearScreen();pauseFlag_.store(true);}
+	    if (cms=="r"){logger_->info("resume");cms::ClearScreen();pauseFlag_.store(false);}
 	    }
     }
 
@@ -76,8 +76,8 @@ public:
    
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        std::cout << "用法: " << argv[0] << " <任务名称> <时间(分钟)>" << std::endl;
-        std::cout << "时间支持小数，如: 1.5 表示1分30秒" << std::endl;
+        std::cout << "How to use " << argv[0] << " <taskname> <time(minutes)>" << std::endl;
+        std::cout << "Time supports decimals, for example: 1.5 represents 1 minute and 30 seconds" << std::endl;
         return 1;
     }
 
@@ -89,21 +89,19 @@ int main(int argc, char *argv[]) {
     auto logger = std::make_shared<spdlog::logger>("Main", fileSink);
 
     cms::ClearScreen();
+    logger->info("Arguments:");
+    for (int i = 0; i < argc; ++i) {logger->info("  argv[{}] = {}", i, argv[i]);}
 
     
     Manager manager(logger);
-    try {
-        double minutes = std::stod(argv[2]);  
-        int seconds = static_cast<int>(minutes * 60);  
-        manager.SetTaskName(argv[1]).SetTime(seconds);
+    try {double minutes = std::stod(argv[2]);  int seconds = static_cast<int>(minutes * 60);  manager.SetTaskName(argv[1]).SetTime(seconds);
     } catch (...) {
-        std::cout << "时间格式错误" << std::endl;
+        std::cout << "Time format error" << std::endl;
         return 1;
     }
 
     
-    std::thread quit(&Manager::HandleQuit, &manager);
-    quit.detach();  
+    std::thread quit(&Manager::HandleQuit, &manager);quit.detach();  
     
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
