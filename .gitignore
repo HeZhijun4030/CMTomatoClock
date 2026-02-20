@@ -1,0 +1,16 @@
+
+build/
+compile_commands.json
+
+
+logs/
+*.log
+
+
+lib/
+
+
+*.swp
+*.swo
+.vscode/
+.idea/

@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/data/data/com.termux/files/home/CMproject/build",
-  "command": "/data/data/com.termux/files/usr/bin/c++ -I/data/data/com.termux/files/home/CMproject/include -O2 -g -DNDEBUG -std=gnu++17 -finput-charset=UTF-8 -fexec-charset=UTF-8 -o CMakeFiles/MyProject.dir/src/main.cpp.o -c /data/data/com.termux/files/home/CMproject/src/main.cpp",
-  "file": "/data/data/com.termux/files/home/CMproject/src/main.cpp",
-  "output": "/data/data/com.termux/files/home/CMproject/build/CMakeFiles/MyProject.dir/src/main.cpp.o"
-}
-]
