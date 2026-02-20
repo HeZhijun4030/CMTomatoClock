@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 #include <filesystem>
-class Manager {
+class Manager : public std::enable_shared_from_this<Manager>{
 private:
     std::string taskName_;
     std::atomic<int> time_{0};
@@ -60,14 +60,20 @@ public:
     }
 }
     void HandleQuit(){
+	    std::weak_ptr<Manager> wekptr = shared_from_this();
 	    std::string cms;
 	    while (!(stopFlag_.load()) && time_.load()>0) {
 	    std::cout<<'\n' << std ::flush;
+	    auto sharedThis = wekptr.lock();if (!sharedThis){return;}
 	    cms=cms::SafeInput<std::string>("");
-	    if (cms=="q"){logger_->info("quit");stopFlag_ .store(true);break;}
+	    sharedThis=wekptr.lock();if(!sharedThis){return;}
+	    if (cms=="q"){sharedThis->logger_->info("quit");sharedThis->stopFlag_ .store(true);break;}
 	    
-	    if (cms=="p"){logger_->info("pause");cms::ClearScreen();pauseFlag_.store(true);}
-	    if (cms=="r"){logger_->info("resume");cms::ClearScreen();pauseFlag_.store(false);}
+	    if (cms=="p"){sharedThis->logger_->info("pause");cms::ClearScreen();sharedThis->pauseFlag_.store(true);}
+	    if (cms=="r"){sharedThis->logger_->info("resume");cms::ClearScreen();sharedThis->pauseFlag_.store(false);}
+	    }
+	    if (auto sharedThis = wekptr.lock()) {
+	    	sharedThis->logger_->info("input exiting");
 	    }
     }
 
@@ -93,20 +99,21 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < argc; ++i) {logger->info("  argv[{}] = {}", i, argv[i]);}
 
     
-    Manager manager(logger);
-    try {double minutes = std::stod(argv[2]);  int seconds = static_cast<int>(minutes * 60);  manager.SetTaskName(argv[1]).SetTime(seconds);
+    auto manager= std::make_shared<Manager>(logger);
+    try {double minutes = std::stod(argv[2]);  int seconds = static_cast<int>(minutes * 60);  manager->SetTaskName(argv[1]).SetTime(seconds);
     } catch (...) {
         std::cout << "Time format error" << std::endl;
         return 1;
     }
 
     
-    std::thread quit(&Manager::HandleQuit, &manager);quit.detach();  
+    std::thread quit([manager]{manager->HandleQuit();});quit.detach();  
     
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     
-    manager.StartTask();
+    manager->StartTask();
+
 
     
     std::this_thread::sleep_for(std::chrono::milliseconds(800));
